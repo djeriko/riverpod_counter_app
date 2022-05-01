@@ -1,23 +1,55 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_counter_app/providers/counter_provider.dart';
 
-class CounterPage extends StatelessWidget {
+class CounterPage extends ConsumerWidget {
   const CounterPage({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final int counter = ref.watch(counterProvider);
+    ref.listen<int>(counterProvider, (previous, next) {
+      if (next >= 5) {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return AlertDialog(
+                title: const Text('Warning'),
+                content: const Text(
+                    'Counter dangerously high. Consider resetting it.'),
+                actions: [
+                  TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('OK'))
+                ],
+              );
+            });
+      }
+    });
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Counter'),
+        actions: [
+          IconButton(
+            onPressed: () {
+              ref.invalidate(counterProvider);
+            },
+            icon: const Icon(Icons.refresh),
+          )
+        ],
       ),
       body: Center(
         child: Text(
-          '0',
+          '$counter',
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       floatingActionButton: FloatingActionButton(
         child: const Icon(Icons.add),
-        onPressed: () => {},
+        onPressed: () {
+          ref.read(counterProvider.notifier).state++;
+        },
       ),
     );
   }
